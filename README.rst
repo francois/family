@@ -18,7 +18,7 @@ This is a food journal: at breakfast today, I ate an orange, a glass of milk and
 Deployment Target
 -----------------
 
-This software is a Scala program that depends on a PostgreSQL server for the heavy lifting. [Sqitch](http://sqitch.org/) is used to manage database migrations. Look in `sqitch.conf` and `db/migrations` for the configuration and database migration files, respectively.
+This software is a Scala program that depends on a PostgreSQL server for the heavy lifting. `Sqitch <http://sqitch.org/>`_ is used to manage database migrations. Look in `sqitch.conf` and `db/migrations` for the configuration and database migration files, respectively.
 
 
 License
