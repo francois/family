@@ -1,0 +1,12 @@
+%syntax-version=1.0.0
+%project=family
+%uri=https://github.com/francois/family
+
+tables/public__families 2017-03-04T14:14:09Z François Beausoleil <francois@teksol.info> # Creates the global families table
+extensions/uuid-ossp 2017-03-04T14:21:25Z François Beausoleil <francois@teksol.info> # Adds the uuid-ossp extension
+tables/public__events [extensions/uuid-ossp] 2017-03-04T14:23:57Z François Beausoleil <francois@teksol.info> # Creates the table where the PostgresEventBus stores events
+schemas/mybank 2017-03-04T14:29:02Z François Beausoleil <francois@teksol.info> # Creates the mybanks schema, for the My Bank application
+tables/mybank__families [schemas/mybank] 2017-03-04T14:30:19Z François Beausoleil <francois@teksol.info> # Records the families the My Bank application knows about
+tables/mybank__accounts [tables/mybank__families] 2017-03-04T14:53:40Z François Beausoleil <francois@teksol.info> # Records accounts, or places where money can be stored
+tables/mybank__entries [tables/mybank__accounts] 2017-03-04T14:57:52Z François Beausoleil <francois@teksol.info> # Records individual money movements within a single account
+tables/mybank__goals [tables/mybank__accounts] 2017-03-04T15:01:02Z François Beausoleil <francois@teksol.info> # Records account's goals, to set money aside for different things

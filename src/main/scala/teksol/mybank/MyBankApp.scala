@@ -10,15 +10,17 @@ trait MyBankApp {
 
     def listAccounts(familyId: FamilyId): Set[Account]
 
-    def listAccountEntries(familyId:FamilyId, accountId: AccountId): Set[Entry]
+    def listAccountEntries(familyId: FamilyId, accountId: AccountId): Set[Entry]
 
     def deposit(familyId: FamilyId, accountId: AccountId, postedOn: LocalDate, description: Description, amount: Amount)
 
     def withdraw(familyId: FamilyId, accountId: AccountId, postedOn: LocalDate, description: Description, amount: Amount)
 
-    def createGoal(familyId:FamilyId, accountId: AccountId, goalId: GoalId, name: GoalName, dueOn: LocalDate, target: Amount)
+    def createGoal(familyId: FamilyId, accountId: AccountId, goalId: GoalId, name: GoalDescription, dueOn: LocalDate, target: Amount)
 
-    def listGoals(familyId:FamilyId, accountId: AccountId): Set[Goal]
+    def listGoals(familyId: FamilyId, accountId: AccountId): Set[Goal]
 
     def applyInterestsToAllFamilies(postedOn: LocalDate)
+
+    def updateInterestRate(familyId: FamilyId, yearlyInterestRate: InterestRate)
 }

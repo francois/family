@@ -12,13 +12,13 @@ This software is designed to let children understand the concepts of banks, depo
 My Journal
 ----------
 
-This is a food journal: today I ate an orange, a glass of milk and so on. The system does not have any databae of food, because it depends on what locality you are in, and how you want to manage it.
+This is a food journal: at breakfast today, I ate an orange, a glass of milk and so on. The system does not have any databae of food, because it depends on what locality you are in, and how you want to manage it.
 
 
 Deployment Target
 -----------------
 
-This software is a Scala program that depends on a PostgreSQL server for the heavy lifting. A set of migration scripts is provided in `db/migrations`, to put the database in a consistent format. The software enforces internal consistency by checking, on startup, the database migration level with the schema format. The software will refuse to boot if the database and the internal schema are inconsistent with respect to each other.
+This software is a Scala program that depends on a PostgreSQL server for the heavy lifting. [Sqitch](http://sqitch.org/) is used to manage database migrations. Look in `sqitch.conf` and `db/migrations` for the configuration and database migration files, respectively.
 
 
 License
