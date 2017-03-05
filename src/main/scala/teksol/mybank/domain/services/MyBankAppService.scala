@@ -3,7 +3,6 @@ package teksol.mybank.domain.services
 import java.time.LocalDate
 import java.util.UUID
 
-import com.sun.org.glassfish.gmbal.Description
 import teksol.domain.FamilyId
 import teksol.infrastructure._
 import teksol.mybank.domain.events.InterestPosted
@@ -18,7 +17,7 @@ class MyBankAppService(private[this] val repository: MyBankRepository, private[t
             entries.map(entryToInterestPosted).foreach(eventBus.publish)
 
         def entryToInterestPosted(entry: Entry) =
-            InterestPosted(entry.familyId, entry.accountId, entry.postedOn, entry.amount)
+            InterestPosted(entry.familyId, entry.accountId, entry.entryId, entry.postedOn, entry.amount)
 
         def buildEntriesForInterestBearingAccounts(accounts: Set[AccountWithInterest]) = {
             def buildDescription(account: AccountWithInterest) = {
