@@ -24,5 +24,5 @@ trait MyBankRepository {
 
     def saveEntries(entries: Set[Entry]): Unit
 
-    def updateInterestRate(familyId: FamilyId, yearlyInterestRate: InterestRate): Unit
+    def changeYearlyInterestRate(familyId: FamilyId, yearlyInterestRate: InterestRate): Unit
 }

@@ -4,6 +4,7 @@ import java.util.{Locale, UUID}
 
 import teksol.domain.FamilyId
 import teksol.infrastructure.EventBus
+import teksol.mybank.domain.events.InterestRateChanged
 import teksol.mybank.infrastructure.MyBankRepository
 
 case class Family(familyId: FamilyId,
@@ -12,7 +13,10 @@ case class Family(familyId: FamilyId,
                   eventBus: EventBus) {
     def accounts: Set[Account] = repository.listAccounts(familyId)
 
-    def updateInterestRate(yearlyInterestRate: InterestRate): Unit = repository.updateInterestRate(familyId, yearlyInterestRate)
+    def changeYearlyInterestRate(yearlyInterestRate: InterestRate): Unit = {
+        repository.changeYearlyInterestRate(familyId, yearlyInterestRate)
+        eventBus.publish(InterestRateChanged(familyId, yearlyInterestRate))
+    }
 
     def createAccount(name: AccountName): Account = {
         val account = Account(familyId, AccountId(UUID.randomUUID()), name, Amount.ZERO, repository, eventBus)

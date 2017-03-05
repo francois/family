@@ -86,7 +86,7 @@ object Main extends Config {
         val goals: Set[Goal] = transactionTemplate.execute((_) => johnsAccount.goals)
         goals.foreach(log.info("{}", _))
 
-        transactionTemplate.execute((_) => myBankService.findFamily(smithFamilyId).updateInterestRate(yearlyInterestRate = InterestRate(12.5)))
+        transactionTemplate.execute((_) => myBankService.findFamily(smithFamilyId).changeYearlyInterestRate(yearlyInterestRate = InterestRate(12.5)))
 
         (1 to 10).foreach { day =>
             transactionTemplate.execute((_) => myBankService.applyInterestsToAllFamilies(i18n, LocalDate.now().plusDays(day)))

@@ -9,10 +9,9 @@ import org.springframework.jdbc.core.{JdbcTemplate, RowMapper}
 import org.springframework.util.Assert
 import teksol.domain.FamilyId
 import teksol.infrastructure._
-import teksol.mybank.domain._
-import teksol.mybank.domain.events.InterestRateUpdated
+import teksol.mybank.domain.events.InterestRateChanged
 import teksol.mybank.domain.models._
-import teksol.mybank.infrastructure.{MyBankRepository, _}
+import teksol.mybank.infrastructure.MyBankRepository
 
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
@@ -73,10 +72,9 @@ class PostgresMyBankRepository(private[this] val jdbcTemplate: JdbcTemplate, pri
         list.asScala.toSet
     }
 
-    override def updateInterestRate(familyId: FamilyId, yearlyInterestRate: InterestRate): Unit = {
+    override def changeYearlyInterestRate(familyId: FamilyId, yearlyInterestRate: InterestRate): Unit = {
         jdbcTemplate.update("UPDATE mybank.families SET yearly_interest_rate = ?::numeric WHERE family_id = ?::uuid",
             yearlyInterestRate.toSql, familyId.toSql)
-        eventBus.publish(InterestRateUpdated(familyId, yearlyInterestRate))
     }
 
     override def saveEntry(entry: Entry) = saveEntries(Set(entry))
