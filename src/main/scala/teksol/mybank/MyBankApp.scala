@@ -3,6 +3,7 @@ package teksol.mybank
 import java.time.LocalDate
 
 import teksol.domain.FamilyId
+import teksol.infrastructure.I18n
 import teksol.mybank.domain._
 
 trait MyBankApp {
@@ -20,7 +21,7 @@ trait MyBankApp {
 
     def listGoals(familyId: FamilyId, accountId: AccountId): Set[Goal]
 
-    def applyInterestsToAllFamilies(postedOn: LocalDate)
+    def applyInterestsToAllFamilies(i18n: I18n, postedOn: LocalDate)
 
     def updateInterestRate(familyId: FamilyId, yearlyInterestRate: InterestRate)
 }

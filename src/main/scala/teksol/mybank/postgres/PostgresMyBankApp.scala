@@ -3,7 +3,7 @@ package teksol.mybank.postgres
 import java.sql.ResultSet
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.util.{Locale, UUID}
 
 import org.springframework.jdbc.core.{JdbcTemplate, RowMapper}
 import org.springframework.util.Assert
@@ -114,9 +114,9 @@ class PostgresMyBankApp(private[this] val jdbcTemplate: JdbcTemplate, private[th
         eventBus.publish(InterestRateUpdated(familyId, yearlyInterestRate))
     }
 
-    override def applyInterestsToAllFamilies(postedOn: LocalDate): Unit = {
+    override def applyInterestsToAllFamilies(i18n: I18n, postedOn: LocalDate): Unit = {
         val accounts = findAccountsWithInterestRates.asScala.toSet
-        val entries = applyInterests(accounts, postedOn, Description("interests"))
+        val entries = buildInterestEntries(i18n, accounts, postedOn)
         postInterestEntriesToDatabase(postedOn, entries)
         publishInterestEntriesCreated(entries)
     }
@@ -143,34 +143,46 @@ class PostgresMyBankApp(private[this] val jdbcTemplate: JdbcTemplate, private[th
     private[this] def entryToInterestPosted(entry: Entry) =
         InterestPosted(entry.familyId, entry.accountId, entry.postedOn, entry.amount)
 
-    private[this] def applyInterests(accounts: Set[AccountWithInterest], postedOn: LocalDate, description: Description) = {
+    private[this] def buildInterestEntries(i18n: I18n, accounts: Set[AccountWithInterest], postedOn: LocalDate) = {
+        def buildDescription(account: AccountWithInterest) = {
+            val formattedBalance = i18n.amountWithDelimiter(account.locale, account.balance)
+            val formattedRate = i18n.numberToPercentage(account.locale, account.yearlyInterestRate)
+            val i18nKey = account.balance match {
+                case Amount.ZERO => "interests.none"
+                case balance if balance.isNegative => "interests.negative"
+                case _ => "interests.positive"
+            }
+
+            i18n.translate(account.locale, i18nKey, params = Map("rate" -> formattedRate, "balance" -> formattedBalance)).map(Description.apply).get
+        }
+
         accounts.map { account =>
-            Entry(account.familyId, account.accountId, EntryId(UUID.randomUUID()), postedOn, description = description, account.interests)
+            Entry(account.familyId, account.accountId, EntryId(UUID.randomUUID()), postedOn, buildDescription(account), account.interests)
         }
     }
 
     private def findAccountsWithInterestRates = {
         jdbcTemplate.query("" +
-                "SELECT family_id, account_id, name, yearly_interest_rate, coalesce(sum(amount), 0) AS balance " +
+                "SELECT family_id, account_id, name, yearly_interest_rate, locale, coalesce(sum(amount), 0) AS balance " +
                 "FROM mybank.accounts " +
                 "INNER JOIN mybank.families USING (family_id) " +
                 "LEFT JOIN mybank.entries USING (family_id, account_id) " +
-                "GROUP BY family_id, account_id, yearly_interest_rate", interestRowMapper)
+                "GROUP BY family_id, account_id, yearly_interest_rate, locale", interestRowMapper)
     }
 
     override def receive(event: Event): Unit = event match {
-        case FamilyCreated(familyId) => createFamily(familyId)
+        case FamilyCreated(familyId, locale) => createFamily(familyId, locale)
         case _ => () // do not react to other events: we're not interested
     }
 
-    private[this] def createFamily(familyId: FamilyId): Unit = {
-        jdbcTemplate.update("INSERT INTO mybank.families(family_id, yearly_interest_rate) VALUES (?::uuid, ?::numeric)",
-            familyId.toSql, DEFAULT_INTEREST_RATE.toSql)
+    private[this] def createFamily(familyId: FamilyId, locale: Locale): Unit = {
+        jdbcTemplate.update("INSERT INTO mybank.families(family_id, yearly_interest_rate, locale) VALUES (?::uuid, ?::numeric, ?::text)",
+            familyId.toSql, DEFAULT_INTEREST_RATE.toSql, locale.toLanguageTag)
     }
 
     private[this] val DEFAULT_INTEREST_RATE = InterestRate(10)
 
-    private case class AccountWithInterest(familyId: FamilyId, accountId: AccountId, name: AccountName, balance: Amount, yearlyInterestRate: InterestRate) {
+    private case class AccountWithInterest(familyId: FamilyId, accountId: AccountId, name: AccountName, balance: Amount, yearlyInterestRate: InterestRate, locale: Locale) {
         def interests: Amount = {
             val base = balance * yearlyInterestRate / 100 / 365
             if (balance.isNegative) {
@@ -197,8 +209,9 @@ class PostgresMyBankApp(private[this] val jdbcTemplate: JdbcTemplate, private[th
         val name = AccountName(rs.getString("name"))
         val balance = Amount(rs.getBigDecimal("balance"))
         val yearlyInterestRate = InterestRate(rs.getBigDecimal("yearly_interest_rate"))
+        val locale = Locale.forLanguageTag(rs.getString("locale"))
 
-        AccountWithInterest(familyId, accountId, name, balance, yearlyInterestRate)
+        AccountWithInterest(familyId, accountId, name, balance, yearlyInterestRate, locale)
     }
 
     private[this] val accountRowMapper: RowMapper[Account] = (rs: ResultSet, _: Int) => {

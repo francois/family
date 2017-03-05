@@ -4,7 +4,7 @@ SET client_min_messages TO 'warning';
 
 BEGIN;
 
-  SELECT family_id, name, created_at
+  SELECT family_id, name, locale, created_at
   FROM public.families
   WHERE false;
 

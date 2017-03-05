@@ -4,7 +4,7 @@ SET client_min_messages TO 'warning';
 
 BEGIN;
 
-  SELECT family_id, yearly_interest_rate
+  SELECT family_id, locale, yearly_interest_rate
   FROM mybank.families
   WHERE false;
 
