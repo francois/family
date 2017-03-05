@@ -7,6 +7,8 @@ import teksol.domain.FamilyId
 import teksol.infrastructure.{Event, ToJson}
 import teksol.mybank.domain.{AccountId, Amount}
 
+import scala.language.implicitConversions
+
 case class InterestPosted(familyId: FamilyId, accountId: AccountId, postedOn: LocalDate, amount: Amount) extends Event {
     implicit def localDateToJson(date: LocalDate): ToJson = new ToJson {
         override def toJson: String = "\"" + date.format(DateTimeFormatter.ISO_DATE) + "\""
