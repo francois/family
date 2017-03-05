@@ -48,14 +48,23 @@ object Main extends Config {
         val fr_FR = Locale.FRANCE
         val i18n = new InMemoryI18n(Map(
             en_US -> Map(
+                "salary.none" -> "No completed chores this period",
+                "salary.positive" -> "%{numUnitsCompleted} completed this week",
+                "salary.negative" -> "%{numUnitsCompleted} completed this week",
                 "interests.none" -> "No interests for period",
                 "interests.negative" -> "Negative interests on $ %{balance} balance, at a rate of %{rate}",
                 "interests.positive" -> "Interests on $ %{balance} balance, at a rate of %{rate}"),
             fr_CA -> Map(
+                "salary.none" -> "Aucune tâche ménagères complétées cette semaine",
+                "salary.positive" -> "%{numUnitsCompleted} tâches ménagères complétées cette semaine",
+                "salary.negative" -> "%{numUnitsCompleted} tâches ménagères complétées cette semaine",
                 "interests.none" -> "Aucun intérêts pour la période",
                 "interests.negative" -> "Intérêts négatifs calculés sur un solde de %{balance} $ et un taux de %{rate}",
                 "interests.positive" -> "Intérêts calculés sur un solde de %{balance} $ et un taux de %{rate}"),
             fr_FR -> Map(
+                "salary.none" -> "Aucune tâche ménagères complétées cette semaine",
+                "salary.positive" -> "%{numUnitsCompleted} tâches ménagères complétées cette semaine",
+                "salary.negative" -> "%{numUnitsCompleted} tâches ménagères complétées cette semaine",
                 "interests.none" -> "Aucun intérêts pour la période",
                 "interests.negative" -> "Intérêts négatifs calculés sur un solde de %{balance} $ et un taux de %{rate}",
                 "interests.positive" -> "Intérêts calculés sur un solde de %{balance} $ et un taux de %{rate}")))
@@ -91,5 +100,8 @@ object Main extends Config {
         (1 to 10).foreach { day =>
             transactionTemplate.execute((_) => myBankService.applyInterestsToAllFamilies(i18n, LocalDate.now().plusDays(day)))
         }
+
+        johnsAccount.changeSalaryTo(Salary(BigDecimal("0.57")))
+        myBankService.findFamily(smithFamilyId).accounts.head.postSalary(i18n, LocalDate.now(), 3)
     }
 }

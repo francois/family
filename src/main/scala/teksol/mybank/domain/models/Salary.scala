@@ -2,7 +2,7 @@ package teksol.mybank.domain.models
 
 import teksol.infrastructure.{ToJson, ToSql}
 
-case class Amount(value: BigDecimal) extends Comparable[Amount] with ToSql with ToJson {
+case class Salary(value: BigDecimal) extends Comparable[Salary] with ToSql with ToJson {
     /**
       * Returns a new Amount instance where the scale of the value is to pennies.
       *
@@ -32,21 +32,15 @@ case class Amount(value: BigDecimal) extends Comparable[Amount] with ToSql with 
 
     def isNegative: Boolean = value.compareTo(0) < 0
 
-    def isZero: Boolean = this == Amount.ZERO
+    def isZero: Boolean = this == Salary.ZERO
 
-    override def compareTo(o: Amount): Int = value.compareTo(o.value)
+    override def compareTo(o: Salary): Int = value.compareTo(o.value)
 
     override def toSql: AnyRef = value.bigDecimal
 
     override def toJson: String = "\"" + value + "\""
 }
 
-object Amount {
-    val PENNY = Amount(BigDecimal("0.01"))
-    val NEG_PENNY = Amount(BigDecimal("-0.01"))
-    val MINUS_ONE = Amount(-1)
-    val ZERO = Amount(0)
-    val ONE = Amount(1)
-    val TWO = Amount(2)
-    val TEN = Amount(10)
+object Salary {
+    val ZERO = Salary(0)
 }

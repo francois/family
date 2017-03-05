@@ -19,7 +19,7 @@ case class Family(familyId: FamilyId,
     }
 
     def createAccount(name: AccountName): Account = {
-        val account = Account(familyId, AccountId(UUID.randomUUID()), name, Amount.ZERO, repository, eventBus)
+        val account = Account(familyId, AccountId(UUID.randomUUID()), locale, name, Amount.ZERO, Amount.ZERO, repository, eventBus)
         repository.saveAccount(account)
         account
     }

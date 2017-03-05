@@ -4,7 +4,7 @@ SET client_min_messages TO 'warning';
 
 BEGIN;
 
-  SELECT family_id, account_id, name, created_at
+  SELECT family_id, account_id, name, salary, created_at
   FROM mybank.accounts
   WHERE false;
 

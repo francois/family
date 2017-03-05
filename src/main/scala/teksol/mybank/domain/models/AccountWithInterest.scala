@@ -8,10 +8,11 @@ import teksol.mybank.infrastructure.MyBankRepository
 
 case class AccountWithInterest(familyId: FamilyId,
                                accountId: AccountId,
+                               locale: Locale,
                                name: AccountName,
+                               salary: Amount,
                                balance: Amount,
                                yearlyInterestRate: InterestRate,
-                               locale: Locale,
                                repository: MyBankRepository,
                                eventBus: EventBus) {
     def interests: Amount = {

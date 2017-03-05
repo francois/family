@@ -31,19 +31,20 @@ class PostgresMyBankRepository(private[this] val jdbcTemplate: JdbcTemplate, pri
                 "LIMIT 1", familyRowMapper, familyId.toSql)
 
     override def saveAccount(account: Account): Unit = {
-        jdbcTemplate.update("INSERT INTO mybank.accounts(family_id, account_id, name) VALUES (?::uuid, ?::uuid, ?::text)",
-            account.familyId.toSql, account.accountId.toSql, account.name.toSql)
+        jdbcTemplate.update("INSERT INTO mybank.accounts(family_id, account_id, name, salary) VALUES (?::uuid, ?::uuid, ?::text, ?::numeric)",
+            account.familyId.toSql, account.accountId.toSql, account.name.toSql, account.salary.toSql)
     }
 
     override def listAccounts(familyId: FamilyId): Set[Account] = {
         Assert.notNull(familyId, "familyId")
 
         val list = jdbcTemplate.query("" +
-                "SELECT family_id, account_id, name, coalesce(sum(amount), 0) AS balance " +
+                "SELECT family_id, account_id, locale, name, salary, coalesce(sum(amount), 0) AS balance " +
                 "FROM mybank.accounts " +
+                "INNER JOIN mybank.families USING (family_id) " +
                 "LEFT JOIN mybank.entries USING (family_id, account_id) " +
                 "WHERE family_id = ?::uuid " +
-                "GROUP BY family_id, account_id, name", accountRowMapper, familyId.toSql)
+                "GROUP BY family_id, account_id, locale, name, salary", accountRowMapper, familyId.toSql)
 
         list.asScala.toSet
     }
@@ -77,7 +78,12 @@ class PostgresMyBankRepository(private[this] val jdbcTemplate: JdbcTemplate, pri
             yearlyInterestRate.toSql, familyId.toSql)
     }
 
-    override def saveEntry(entry: Entry) = saveEntries(Set(entry))
+    override def changeSalary(account: Account, newSalary: Salary): Unit = {
+        jdbcTemplate.update("UPDATE mybank.accounts SET salary = ?::numeric WHERE family_id = ?::uuid AND account_id = ?::uuid",
+            newSalary.toSql, account.familyId.toSql, account.accountId.toSql)
+    }
+
+    override def saveEntry(entry: Entry): Unit = saveEntries(Set(entry))
 
     override def saveEntries(entries: Set[Entry]): Unit = {
         val placeholders = entries.toSeq.map(_ => "(?::uuid, ?::uuid, ?::uuid, ?::date, ?::text, ?::numeric)").mkString(", ")
@@ -96,11 +102,11 @@ class PostgresMyBankRepository(private[this] val jdbcTemplate: JdbcTemplate, pri
 
     override def listAccountsAndTheirInterestRates: Set[AccountWithInterest] = {
         val list = jdbcTemplate.query("" +
-                "SELECT family_id, account_id, name, yearly_interest_rate, locale, coalesce(sum(amount), 0) AS balance " +
+                "SELECT family_id, account_id, name, yearly_interest_rate, locale, salary, coalesce(sum(amount), 0) AS balance " +
                 "FROM mybank.accounts " +
                 "INNER JOIN mybank.families USING (family_id) " +
                 "LEFT JOIN mybank.entries USING (family_id, account_id) " +
-                "GROUP BY family_id, account_id, yearly_interest_rate, locale", interestRowMapper)
+                "GROUP BY family_id, account_id, yearly_interest_rate, locale, salary", interestRowMapper)
         list.asScala.toSet
     }
 
@@ -122,20 +128,23 @@ class PostgresMyBankRepository(private[this] val jdbcTemplate: JdbcTemplate, pri
         val familyId = FamilyId(UUID.fromString(rs.getString("family_id")))
         val accountId = AccountId(UUID.fromString(rs.getString("account_id")))
         val name = AccountName(rs.getString("name"))
+        val locale = Locale.forLanguageTag(rs.getString("locale"))
+        val salary = Amount(rs.getBigDecimal("salary"))
         val balance = Amount(rs.getBigDecimal("balance"))
         val yearlyInterestRate = InterestRate(rs.getBigDecimal("yearly_interest_rate"))
-        val locale = Locale.forLanguageTag(rs.getString("locale"))
 
-        AccountWithInterest(familyId, accountId, name, balance, yearlyInterestRate, locale, this, eventBus)
+        AccountWithInterest(familyId, accountId, locale, name, salary, balance, yearlyInterestRate, this, eventBus)
     }
 
     private[this] val accountRowMapper: RowMapper[Account] = (rs: ResultSet, _: Int) => {
         val familyId = FamilyId(UUID.fromString(rs.getString("family_id")))
         val accountId = AccountId(UUID.fromString(rs.getString("account_id")))
         val name = AccountName(rs.getString("name"))
+        val salary = Amount(rs.getBigDecimal("salary"))
         val balance = Amount(rs.getBigDecimal("balance"))
+        val locale = Locale.forLanguageTag(rs.getString("locale"))
 
-        Account(familyId, accountId, name, balance, this, eventBus)
+        Account(familyId, accountId, locale, name, salary, balance, this, eventBus)
     }
 
     private[this] val entryRowMapper: RowMapper[Entry] = (rs: ResultSet, _: Int) => {
