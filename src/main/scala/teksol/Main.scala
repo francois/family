@@ -8,8 +8,9 @@ import com.jolbox.bonecp.BoneCPDataSource
 import org.slf4j.LoggerFactory
 import teksol.domain.{FamilyId, FamilyName}
 import teksol.infrastructure.{EventBus, InMemoryI18n}
-import teksol.mybank.domain._
-import teksol.mybank.postgres.PostgresMyBankApp
+import teksol.mybank.domain.models._
+import teksol.mybank.domain.services.MyBankAppService
+import teksol.mybank.infrastructure.postgres.PostgresMyBankRepository
 import teksol.postgres.{PostgresEventBus, PostgresFamilyApp}
 
 object Main extends Config {
@@ -37,9 +38,10 @@ object Main extends Config {
         log.info("Instantiating FamilyApp")
         val app = new PostgresFamilyApp(jdbcTemplate, eventBus)
 
-        log.info("Booting My Bank")
-        val myBankApp = new PostgresMyBankApp(jdbcTemplate, eventBus)
-        eventBus.register(myBankApp)
+        log.info("Booting My Bank Repository")
+        val myBankRepository = new PostgresMyBankRepository(jdbcTemplate, eventBus)
+        val myBankService = new MyBankAppService(myBankRepository, eventBus)
+        eventBus.register(myBankService)
 
         val en_US = Locale.US
         val fr_CA = Locale.CANADA_FRENCH
@@ -63,29 +65,31 @@ object Main extends Config {
         log.info("Creating family")
         transactionTemplate.execute((_) => app.createFamily(smithFamilyId, FamilyName("Smith"), fr_CA))
 
-        val johnAccountId = AccountId(UUID.randomUUID())
         transactionTemplate.execute((_) => {
-            myBankApp.createAccount(smithFamilyId, johnAccountId, AccountName("John"))
-            myBankApp.deposit(smithFamilyId, johnAccountId, LocalDate.now(), Description("Initial balance"), Amount(BigDecimal("44.49")))
+            val family = myBankService.findFamily(smithFamilyId)
+            val account = family.createAccount(AccountName("John"))
+            account.postDeposit(LocalDate.now(), EntryDescription("Initial balance"), Amount(BigDecimal("44.49")))
         })
 
-        val accounts: Set[Account] = transactionTemplate.execute((_) => myBankApp.listAccounts(smithFamilyId))
+        val accounts: Set[Account] = transactionTemplate.execute((_) => myBankService.findFamily(smithFamilyId).accounts)
         accounts.foreach(log.info("{}", _))
 
+        val johnsAccount = accounts.head
         transactionTemplate.execute((_) => {
-            myBankApp.withdraw(smithFamilyId, johnAccountId, LocalDate.now(), Description("buy candies"), Amount(BigDecimal("3.41")))
+            johnsAccount.postWithdrawal(LocalDate.now(), EntryDescription("buy candies"), Amount(BigDecimal("3.41")))
         })
 
-        val entries: Set[Entry] = transactionTemplate.execute((_) => myBankApp.listAccountEntries(smithFamilyId, johnAccountId))
+        val entries: Set[Entry] = transactionTemplate.execute((_) => johnsAccount.entries)
         entries.foreach(log.info("{}", _))
 
-        transactionTemplate.execute((_) => myBankApp.createGoal(smithFamilyId, johnAccountId, GoalId(UUID.randomUUID()), GoalDescription("Pokedeck"), LocalDate.of(2017, 9, 1), Amount(60)))
-        val goals: Set[Goal] = transactionTemplate.execute((_) => myBankApp.listGoals(smithFamilyId, johnAccountId))
+        transactionTemplate.execute((_) => johnsAccount.createGoal(GoalDescription("Pokedeck"), LocalDate.now().plusDays(13), Amount(60)))
+        val goals: Set[Goal] = transactionTemplate.execute((_) => johnsAccount.goals)
         goals.foreach(log.info("{}", _))
 
-        transactionTemplate.execute((_) => myBankApp.updateInterestRate(smithFamilyId, InterestRate(BigDecimal("12.5"))))
+        transactionTemplate.execute((_) => myBankService.findFamily(smithFamilyId).updateInterestRate(yearlyInterestRate = InterestRate(12.5)))
+
         (1 to 10).foreach { day =>
-            transactionTemplate.execute((_) => myBankApp.applyInterestsToAllFamilies(i18n, LocalDate.now().plusDays(day)))
+            transactionTemplate.execute((_) => myBankService.applyInterestsToAllFamilies(i18n, LocalDate.now().plusDays(day)))
         }
     }
 }

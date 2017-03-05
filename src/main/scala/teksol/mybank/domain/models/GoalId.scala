@@ -1,4 +1,4 @@
-package teksol.mybank.domain
+package teksol.mybank.domain.models
 
 import java.util.UUID
 

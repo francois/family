@@ -1,11 +1,11 @@
-package teksol.mybank.infrastructure
+package teksol.mybank.domain.events
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import teksol.domain.FamilyId
 import teksol.infrastructure.{Event, ToJson}
-import teksol.mybank.domain.{AccountId, Amount}
+import teksol.mybank.domain.models.{AccountId, Amount}
 
 import scala.language.implicitConversions
 

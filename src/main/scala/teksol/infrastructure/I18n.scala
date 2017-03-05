@@ -3,7 +3,7 @@ package teksol.infrastructure
 import java.util.Locale
 
 import org.springframework.util.Assert
-import teksol.mybank.domain.{Amount, InterestRate}
+import teksol.mybank.domain.models.{Amount, InterestRate}
 
 trait I18n {
     def translate(locale: Locale, key: String, default: Option[String] = None, params: Map[String, String]): Option[String]
