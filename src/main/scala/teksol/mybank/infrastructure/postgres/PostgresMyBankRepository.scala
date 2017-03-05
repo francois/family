@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.{JdbcTemplate, RowMapper}
 import org.springframework.util.Assert
 import teksol.domain.FamilyId
 import teksol.infrastructure._
-import teksol.mybank.domain.events.InterestRateChanged
 import teksol.mybank.domain.models._
 import teksol.mybank.infrastructure.MyBankRepository
 
@@ -23,12 +22,22 @@ class PostgresMyBankRepository(private[this] val jdbcTemplate: JdbcTemplate, pri
         override def toSql: AnyRef = date.format(DateTimeFormatter.ISO_DATE)
     }
 
-    override def findFamily(familyId: FamilyId): Family =
-        jdbcTemplate.queryForObject("" +
+    override def findFamily(familyId: FamilyId): Option[Family] =
+        Option(jdbcTemplate.queryForObject("" +
                 "SELECT family_id, locale " +
                 "FROM mybank.families " +
                 "WHERE family_id = ?::uuid " +
-                "LIMIT 1", familyRowMapper, familyId.toSql)
+                "LIMIT 1", familyRowMapper, familyId.toSql))
+
+    override def findAccount(familyId: FamilyId, accountId: AccountId): Option[Account] = {
+        Option(jdbcTemplate.queryForObject("" +
+                "SELECT family_id, account_id, locale, name, salary, coalesce(sum(amount), 0) AS balance " +
+                "FROM mybank.accounts " +
+                "INNER JOIN mybank.families USING (family_id) " +
+                "LEFT JOIN mybank.entries USING (family_id, account_id) " +
+                "WHERE family_id = ?::uuid AND account_id = ?::uuid " +
+                "GROUP BY family_id, account_id, locale, name, salary", accountRowMapper, familyId.toSql, accountId.toSql))
+    }
 
     override def saveAccount(account: Account): Unit = {
         jdbcTemplate.update("INSERT INTO mybank.accounts(family_id, account_id, name, salary) VALUES (?::uuid, ?::uuid, ?::text, ?::numeric)",

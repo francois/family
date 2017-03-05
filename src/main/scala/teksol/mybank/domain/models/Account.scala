@@ -5,8 +5,8 @@ import java.util.{Locale, UUID}
 
 import org.springframework.util.Assert
 import teksol.domain.FamilyId
-import teksol.infrastructure.{EventBus, I18n}
-import teksol.mybank.domain.events.{EntryPosted, SalaryPosted, SalaryChanged}
+import teksol.infrastructure.{EventBus, I18n, ToJson}
+import teksol.mybank.domain.events.{EntryPosted, SalaryChanged, SalaryPosted}
 import teksol.mybank.infrastructure.MyBankRepository
 
 /**
@@ -27,7 +27,11 @@ case class Account(familyId: FamilyId,
                    salary: Amount,
                    balance: Amount,
                    repository: MyBankRepository,
-                   eventBus: EventBus) {
+                   eventBus: EventBus) extends ToJson {
+    implicit def localeToJson(locale: Locale): ToJson = new ToJson {
+        override def toJson: String = "\"" + locale.toLanguageTag + "\""
+    }
+
     def entries: Set[Entry] = repository.listAccountEntries(this)
 
     def postDeposit(postedOn: LocalDate, description: EntryDescription, amount: Amount): Unit = {
@@ -48,7 +52,7 @@ case class Account(familyId: FamilyId,
         eventBus.publish(EntryPosted(familyId, accountId, entry.entryId, postedOn, amount.negate))
     }
 
-    def changeSalaryTo(newSalary: Salary) = {
+    def changeSalaryTo(newSalary: Salary): Unit = {
         repository.changeSalary(this, newSalary)
         eventBus.publish(SalaryChanged(familyId, accountId, newSalary))
     }
@@ -76,5 +80,14 @@ case class Account(familyId: FamilyId,
         val goal = Goal(familyId, accountId, GoalId(UUID.randomUUID()), description, dueOn, target, repository, eventBus)
         repository.saveGoal(goal)
         goal
+    }
+
+    override def toJson: String = {
+        s"""{"family_id":${familyId.toJson},
+           |"account_id":${accountId.toJson},
+           |"locale":${locale.toJson},
+           |"name":${name.toJson},
+           |"salary":${salary.toJson},
+           |"balance":${balance.toJson}}""".stripMargin.replaceAll("\n", "")
     }
 }

@@ -14,3 +14,6 @@ libraryDependencies += "com.jolbox" % "bonecp" % "0.8.0.RELEASE"
 
 // https://mvnrepository.com/artifact/org.postgresql/postgresql
 libraryDependencies += "org.postgresql" % "postgresql" % "42.0.0.jre7"
+
+// https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-server
+libraryDependencies += "org.eclipse.jetty" % "jetty-server" % "9.4.2.v20170220"

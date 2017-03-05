@@ -4,7 +4,9 @@ import teksol.domain.FamilyId
 import teksol.mybank.domain.models._
 
 trait MyBankRepository {
-    def findFamily(familyId: FamilyId): Family
+    def findFamily(familyId: FamilyId): Option[Family]
+
+    def findAccount(familyId: FamilyId, accountId: AccountId): Option[Account]
 
     def listAccounts(familyId: FamilyId): Set[Account]
 

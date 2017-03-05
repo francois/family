@@ -10,7 +10,9 @@ import teksol.mybank.domain.models._
 import teksol.mybank.infrastructure.MyBankRepository
 
 class MyBankAppService(private[this] val repository: MyBankRepository, private[this] val eventBus: EventBus) extends EventBusConsumer {
-    def findFamily(familyId: FamilyId): Family = repository.findFamily(familyId)
+    def findFamily(familyId: FamilyId): Option[Family] = repository.findFamily(familyId)
+
+    def findAccount(familyId: FamilyId, accountId: AccountId): Option[Account] = repository.findAccount(familyId, accountId)
 
     def applyInterestsToAllFamilies(i18n: I18n, postedOn: LocalDate): Unit = {
         def publishInterestEntriesCreated(entries: Set[Entry]) =
