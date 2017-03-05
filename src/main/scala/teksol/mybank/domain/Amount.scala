@@ -1,14 +1,16 @@
 package teksol.mybank.domain
 
-import java.math.{MathContext, RoundingMode}
-
 import teksol.infrastructure.{ToJson, ToSql}
 
 case class Amount(value: BigDecimal) extends Comparable[Amount] with ToSql with ToJson {
-    def truncateToPennies = {
-        val idx = value.toString.indexOf(".")
-        Amount(BigDecimal(value.toString.substring(0, idx + 3))) // the period + 2 digits == 3 digits after the period
-    }
+    /**
+      * Returns a new Amount instance where the scale of the value is to pennies.
+      *
+      * The rounding mode that is used is pennies, hence this method's name.
+      *
+      * @return A ceiling'd copy of this amount instance.
+      */
+    def ceilPennies = Amount(value.setScale(2, BigDecimal.RoundingMode.CEILING))
 
     def negate = Amount(value * -1)
 

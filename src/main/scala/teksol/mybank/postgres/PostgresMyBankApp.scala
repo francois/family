@@ -177,13 +177,13 @@ class PostgresMyBankApp(private[this] val jdbcTemplate: JdbcTemplate, private[th
                 if (base > Amount.NEG_PENNY) {
                     Amount.NEG_PENNY
                 } else {
-                    base.truncateToPennies
+                    base.ceilPennies
                 }
             } else if (balance.isPositive) {
                 if (base < Amount.PENNY) {
                     Amount.PENNY
                 } else {
-                    base.truncateToPennies
+                    base.ceilPennies
                 }
             } else {
                 Amount.ZERO
